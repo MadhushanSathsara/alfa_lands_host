@@ -1,0 +1,83 @@
+.property-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .property-form-container h2 {
+    text-align: center;
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .property-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .property-form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .property-form-group label {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .property-form-group input,
+  .property-form-group select,
+  .property-form-group textarea {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  
+  .property-form-group input:focus,
+  .property-form-group select:focus,
+  .property-form-group textarea:focus {
+    border-color: #007BFF;
+  }
+  
+  .property-form-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .property-form-button {
+    width: 200px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .property-form-button-discard {
+    background-color: #d51a1a;
+    color: #ffffff;
+  }
+  
+  .property-form-button-discard:hover {
+    background-color: #c91414;
+  }
+  
+  .property-form-button-save {
+    background-color: #007BFF;
+    color: #fff;
+  }
+  
+  .property-form-button-save:hover {
+    background-color: #0056b3;
+  }
+  

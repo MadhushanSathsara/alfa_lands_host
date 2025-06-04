@@ -1,0 +1,103 @@
+// src/pages/AllProperties.js
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import './AllProperties.css';
+import { BsSuitHeart } from 'react-icons/bs';
+import { IoBedOutline, IoLocateOutline } from 'react-icons/io5';
+import { GiBathtub, GiHomeGarage } from 'react-icons/gi';
+
+const Home = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [results, setResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = async () => {
+    if (searchTerm.trim() === '') {
+      setResults([]);
+      setHasSearched(false);
+      return;
+    }
+    
+    try {
+      setHasSearched(true);
+      const res = await axios.get(`http://localhost/estate/Backend/api/search.property.php?location=${searchTerm}`);
+      setResults(res.data);
+    } catch (error) {
+      console.error('Search failed', error);
+      setResults([]);
+    }
+  };
+
+
+const AllProperties = () => {
+  const [allPropertiesData, setAllPropertiesData] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost/estate/Backend/api/get_properties.php')
+      .then(res => res.json())
+      .then(data => setAllPropertiesData(data))
+      .catch(err => console.error('Error fetching properties:', err));
+  }, []);
+
+  return (
+    <div className="all-properties-listing">
+      <h1 className="all-properties-title">All Properties</h1>
+
+      <div className="home__search-bar">
+                    <input
+                      type="text"
+                      placeholder="Find your perfect location..."
+                      className="home__search-input"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <button className="home__search-button" onClick={handleSearch}>Search</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+      
+            <div className="home__results">
+              {hasSearched && results.length === 0 && (
+                <p className="no-results">No properties found matching "{searchTerm}"</p>
+              )}
+      
+              {results.map((property) => (
+                <div key={property.property_id} className="home__result-card">
+                  <img src={property.property_image} alt={property.property_name} className="result-image" />
+                  <h4>{property.property_name}</h4>
+                  <p>{property.property_address}</p>
+                  <p>Price: ${property.property_price}</p>
+                  <Link to={`/PropertyOverview/${property.property_id}`} className="viewb">View More</Link>
+                </div>
+              ))}
+            </div>
+
+      <div className="property-grid">
+        {allPropertiesData.map(property => (
+          <Link to={`/property/${property.property_id}`} key={property.property_id} className="deal-link">
+            <div className="property-card">
+              <div className="image-wrapper">
+                <img src={property.property_image} alt="Property" className="property-image" />
+                {/* <BsSuitHeart size="1.5rem" className="heart-icon" /> */}
+              </div>
+              <div className="property-info">
+                <div className="features">
+                  <div className="feature"><IoBedOutline /> <span>{property.beds} Beds</span></div>
+                  <div className="feature"><GiBathtub /> <span>{property.baths} Baths</span></div>
+                  <div className="feature"><GiHomeGarage /> <span>{property.garage} Garage</span></div>
+                </div>
+                <div className="location"><IoLocateOutline /> <span>{property.property_address}</span></div>
+                <p className="price">${parseFloat(property.property_price).toLocaleString()}</p>
+                
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default AllProperties;

@@ -1,0 +1,56 @@
+.discover-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content:center;
+  margin-left: 90px;
+  padding: 60px;
+  background-color: rgb(255, 255, 255);;
+  border-radius: 16px;
+  flex-wrap: wrap;
+  width: 1800px;
+}
+
+.discover-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.discover-title h2 {
+  font-size: 40px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.highli {
+  color: #f0ad1d; /* change to match your theme */
+}
+
+.discover-icon {
+  font-size: 32px;
+  color: #f1b307;
+  margin-bottom: 40px;
+}
+
+.discover-description {
+  flex: 2;
+  background-color: #53452f;
+  border-radius: 0 50px;
+  height: 250px;
+  margin-right: 30px;
+  /* font-weight: bold; */
+}
+
+.discover-description p {
+  font-size: 19px;
+  color: #ffffff;
+  margin: 50px 30px 30px 30px;
+  line-height: 1.6;
+  height: 300px;
+  align-items: center;
+  justify-content: center;
+ 
+}

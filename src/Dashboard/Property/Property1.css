@@ -1,0 +1,352 @@
+.property-container {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
+}
+
+.propertyAddLink{
+  text-decoration: none;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.filter-buttons{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-buttons button {
+  display:flex;
+  flex-direction: column;
+  padding: 15px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f1f1f1;
+  font-size: 1rem;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.filter-buttons button.active {
+  background-color: #44ac4c;
+  color: white;
+}
+
+.filter-buttons button:hover {
+  background-color: #28931c;
+}
+
+.add-property-btn {
+  margin-bottom: 20px;
+}
+
+.add-property-btn button {
+  padding: 10px 20px;
+  width: 160px;
+  border-radius: 8px;
+  background-color: #1ec52c;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 20px;
+  font-weight: bold;
+   text-decoration: none;
+}
+
+.add-property-btn button:hover {
+  background-color: #28931c;
+}
+
+.property-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Grid layout for columns */
+  gap: 30px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.property-card {
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #d7d8d6;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.property-image {
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+.property-body {
+  margin-top: 10px;
+}
+
+.property-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.property-body p {
+  font-size: 0.9em;
+  margin: 5px 0;
+}
+
+.card-buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.edit-btn,
+.delete-btn {
+  background-color: #ccc;
+  color: black;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 5px;
+  width: 45%;
+}
+
+.edit-btn:hover {
+  background-color: #bbb;
+}
+
+.delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+
+.propertyModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.propertyModalContent {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 70px;
+}
+
+.propertyModalHeader {
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.propertyModalClose {
+  position: absolute;
+  right: 5px;
+  top: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  width: 30px;
+  border-radius: 10px;
+  margin-top: -20px;
+  background-color: #bbb;
+}
+
+.propertyModalClose:hover {
+  background-color: rgb(214, 55, 55);
+  color: #fff;
+}
+
+.propertyModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.propertyFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.propertyFormControl {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.propertyModalFooter {
+  display: flex;
+  justify-content: space-between;
+}
+
+.propertyBtnPrimary {
+  background-color: #30c735;
+  color: white;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 150px;
+}
+
+.propertyBtnPrimary:hover {
+  background-color: #24a928;
+  color: white;
+  font-weight: bold;
+}
+
+.propertyBtnSecondary {
+  background-color: #bbb;
+  color: white;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 150px;
+}
+
+.propertyBtnSecondary:hover {
+  background-color: #999;
+  color: white;
+  font-weight: bold;
+}
+.custom-file-upload {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.custom-file-upload input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload label {
+  background-color: #ffc107;
+  color: #333;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  width: fit-content;
+  transition: background-color 0.3s;
+}
+
+.custom-file-upload label:hover {
+  background-color: #e0a800;
+}
+
+.file-count {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 5px;
+}
+
+
+.imagePreviewWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.image-preview-container {
+  position: relative;
+}
+
+.image-preview {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.delete-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  line-height: 0;
+}
+.agent-select-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.assigned-agents-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assigned-agent-item {
+  background: #f1f1f1;
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.remove-agent-btn {
+  background: red;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 0 5px;
+  font-size: 14px;
+  border-radius: 50%;
+}
+

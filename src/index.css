@@ -1,0 +1,24 @@
+
+
+@import "slick-carousel/slick/slick.css";
+@import "slick-carousel/slick/slick-theme.css";
+
+
+.customer-reviews {
+  padding: 2rem;
+
+  text-align: start;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.customer-reviews h2{
+    text-align: center;
+    padding: 10px;
+}
+
+
+  
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

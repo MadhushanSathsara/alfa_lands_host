@@ -1,0 +1,96 @@
+
+.agent-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.agent-form-container h2 {
+  text-align: center;
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.agent-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.agent-form-group {
+  display: flex;
+  flex-direction: row;
+}
+
+.agent-form-group label {
+  width: 150px;
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.agent-form-group input,
+.agent-form-group select {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.agent-form-group input:focus,
+.agent-form-group select:focus {
+  border-color: #007BFF;
+}
+
+.agent-form-image {
+  margin-top: 10px;
+  border-radius: 8px;
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+}
+
+.agent-form-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.agent-form-button {
+  width: 200px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.agent-form-button-discard {
+  background-color: #ee1f1f;
+  color: #ffffff;
+  width: 200px;
+  height: 40px;
+}
+
+.agent-form-button-discard:hover {
+  background-color: #b62727;
+  color: #fff;
+}
+
+.agent-form-button-save {
+  background-color: #1f89fa;
+  color: #fff;
+  width: 200px;
+  height: 40px;
+}
+
+.agent-form-button-save:hover {
+  background-color: #175597;
+  color: #fff;
+}

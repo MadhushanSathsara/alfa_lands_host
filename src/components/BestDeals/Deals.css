@@ -1,0 +1,111 @@
+.best-deals-carousel {
+  width: 100%;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header-title {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.header-description {
+  font-size: 1.2rem;
+  color:#c29008;
+  
+}
+
+.deal-slide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* Make featured-deal 50% width and 200px height */
+.featured-deal {
+  flex: 0 0 50%;
+  height: 200px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Make the featured image take full width and height */
+.featured-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Small deals beside the featured one, 2 items per row */
+.small-deals {
+  flex: 0 0 50%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.small-deal-item {
+  flex: 0 0 48%;
+  height: 200px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.small-deal-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.deal-info {
+  padding: 10px;
+}
+
+.deal-title {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.deal-location {
+  font-size: 0.9rem;
+  color: gray;
+}
+
+.view-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.view {
+  padding: 10px 20px;
+  width: 220px;
+  background-color: #f1b307;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.view:hover {
+  background-color:#c99506;
+   color: white;
+}
