@@ -3,7 +3,7 @@ import { FiEdit, FiLock } from 'react-icons/fi';
 import axios from 'axios';
 import './AgentProfile.css';
 
-// Personal Info Section
+
 const PersonalInfoForm = ({ formData, handleChange, handleSubmit }) => {
   return (
     <div className="personal-info">
@@ -87,7 +87,7 @@ const PersonalInfoForm = ({ formData, handleChange, handleSubmit }) => {
   );
 };
 
-// Login & Password Section
+
 const UpdateLoginForm = ({ handleSubmit }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -160,7 +160,7 @@ const UpdateLoginForm = ({ handleSubmit }) => {
   );
 };
 
-// Main AgentProfile Component
+
 const AgentProfile = () => {
   const [formData, setFormData] = useState({
     agent_name: '',
@@ -173,7 +173,7 @@ const AgentProfile = () => {
     agent_image: ''
   });
 
-  const [activeTab, setActiveTab] = useState('personal'); // default is 'personal'
+  const [activeTab, setActiveTab] = useState('personal'); 
 
   const agentId = localStorage.getItem('agent_id');
 

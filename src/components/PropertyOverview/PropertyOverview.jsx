@@ -1,66 +1,178 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Button, Form, Nav, Alert, Carousel } from "react-bootstrap";
+import { Card, Button, Form, Nav, Carousel } from "react-bootstrap"; // Removed Alert, will use custom message
 import "./PropertyOverview1.css";
-import Modal from "react-bootstrap/Modal";
+import Modal from "react-bootstrap/Modal"; // Keep Bootstrap Modal for now
 import { FaBed, FaBath, FaCar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShareAlt, FaTrain, FaBus, FaRoad } from "react-icons/fa";
-import Loader from "../../components/Loader/Loader";
-
-
-
+import Loader from "../../components/Loader/Loader"; // Keep your Loader component
+import { supabase } from '../../supabaseClient'; // Import Supabase client
 
 const PropertyOverview = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // property_id from URL
   const [property, setProperty] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [submissionMessage, setSubmissionMessage] = useState(null); // For contact form feedback
   const [contactData, setContactData] = useState({
     user_name: "",
     user_email: "",
     user_phone: "",
     message: "",
-    contact_method: "message",
-    agent_id: null,
-    property_id: id,
+    contact_method: "message", // Default value
+    agent_id: null, // Will be set when "Enquire Now" is clicked
+    property_id: parseInt(id), // Ensure it's an integer
   });
 
-    useEffect(() => {
-   
-    const timer = setTimeout(() => setLoading(false), 1000); // 1s delay
-    return () => clearTimeout(timer);
-  }, []);
+  // Supabase Storage URL configuration
+  const SUPABASE_PROJECT_REF = 'hddobdmhmzmmdqtmktse'; // <<< REPLACE THIS with your actual project ref!
+  const PROPERTY_IMAGES_BUCKET = 'propertyimages'; // Your property images bucket name
+  const AGENT_IMAGES_BUCKET = 'agentimages'; // Assuming you have an agent images bucket
+
+  const getPublicImageUrl = (bucket, imageName) => {
+    if (!imageName) return 'https://placehold.co/300x200?text=No+Image';
+    return `https://${SUPABASE_PROJECT_REF}.supabase.co/storage/v1/object/public/${bucket}/${imageName}`;
+  };
 
   useEffect(() => {
-    const fetchPropertyData = async () => {
+    const fetchPropertyAndRelatedData = async () => {
       try {
-        const response = await fetch(`http://localhost/estate/Backend/api/property.php?property_id=${id}`);
-        const data = await response.json();
-        if (data.message) {
-          alert(data.message);
-        } else {
-          setProperty(data);
+        setLoading(true);
+        setSubmissionMessage(null); // Clear any previous messages
+
+        // 1. Fetch main property details
+        const { data: propertyData, error: propertyError } = await supabase
+          .from('property')
+          .select('*')
+          .eq('property_id', id)
+          .single(); // Use single() because we expect one property
+
+        if (propertyError) {
+          throw new Error(`Error fetching property: ${propertyError.message}`);
         }
-      } catch (error) {
-        console.error("Error fetching property data:", error);
-        alert("Error fetching property data.");
+        if (!propertyData) {
+          throw new Error("Property not found.");
+        }
+
+        // 2. Fetch additional property images
+        const { data: additionalImagesData, error: imagesError } = await supabase
+          .from('property_images')
+          .select('image_name')
+          .eq('property_id', id);
+
+        if (imagesError) {
+          console.error("Error fetching property images:", imagesError.message);
+          // Don't throw, just log, as missing images shouldn't break the page
+        }
+        const additionalImages = additionalImagesData ? additionalImagesData.map(img => img.image_name) : [];
+
+
+        // 3. Fetch agents associated with this property via the property_agent join table
+        const { data: propertyAgentsData, error: paError } = await supabase
+          .from('property_agent')
+          .select('agent_id')
+          .eq('property_id', id);
+
+        if (paError) {
+          console.error("Error fetching property agents link:", paError.message);
+          // Don't throw, just log
+        }
+
+        let agentsForProperty = [];
+        if (propertyAgentsData && propertyAgentsData.length > 0) {
+          const agentIds = propertyAgentsData.map(pa => pa.agent_id);
+          const { data: agentsData, error: agentsError } = await supabase
+            .from('agent')
+            .select('*')
+            .in('agent_id', agentIds); // Fetch all agent details in one go
+
+          if (agentsError) {
+            console.error("Error fetching agent details:", agentsError.message);
+          } else {
+            agentsForProperty = agentsData;
+          }
+        }
+
+        // Combine all fetched data into a single property object
+        setProperty({
+          ...propertyData,
+          additional_images: additionalImages,
+          agents: agentsForProperty, // Attach agents array to the property object
+        });
+
+      } catch (err) {
+        console.error("Error fetching property data:", err.message);
+        setSubmissionMessage(`Error: ${err.message}. Please check RLS policies and data.`);
+        setProperty(null); // Clear property on error
+      } finally {
+        setLoading(false);
       }
     };
-    fetchPropertyData();
-  }, [id]);
+
+    fetchPropertyAndRelatedData();
+  }, [id]); // Rerun effect if 'id' changes
+
+  // Function to handle contact form submission
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!contactData.user_name || !contactData.user_phone || !contactData.message) {
+      setSubmissionMessage("Please fill in all required fields (Name, Phone, Message).");
+      return;
+    }
+
+    try {
+      // Insert into the 'agent_contacts' table
+      const { data, error } = await supabase
+        .from('agent_contacts')
+        .insert([contactData]);
+
+      if (error) {
+        throw error;
+      }
+
+      setSubmissionMessage("Your enquiry has been submitted successfully!");
+      setShowModal(false);
+      // Reset form fields
+      setContactData(prev => ({
+        ...prev,
+        user_name: "",
+        user_email: "",
+        user_phone: "",
+        message: "",
+        contact_method: "message",
+        // agent_id and property_id remain as they are for potential next submission
+      }));
+    } catch (error) {
+      console.error("Error submitting enquiry:", error.message);
+      setSubmissionMessage(`Failed to submit enquiry: ${error.message}. Please check RLS policies for agent_contacts.`);
+    }
+  };
 
   if (loading) {
-    return <Loader />;
+    return <Loader />; // Display your custom loader
   }
 
   if (!property) {
-    return <div className="error-message">Property data could not be loaded.</div>;
+    return (
+      <div className="error-message p-4 text-center">
+        {submissionMessage || "Property data could not be loaded. Please check the property ID and database connection."}
+      </div>
+    );
+  }
+
+  // Determine which image to show as the main one for the carousel
+  const carouselImages = [];
+  if (property.property_image) {
+    carouselImages.push(property.property_image); // Main image from property table
+  }
+  if (property.additional_images && property.additional_images.length > 0) {
+    carouselImages.push(...property.additional_images); // Additional images from property_images table
   }
 
 
   return (
     <div className="property-overview-container">
-
       <div className="property-header">
         <div className="container">
           <div className="property-title-wrapper">
@@ -68,7 +180,7 @@ const PropertyOverview = () => {
             <h4 className="property-subtitle">Everything starts with a dream</h4>
           </div>
           <div className="property-meta">
-            <span className="price">LKR {property.property_price.toLocaleString()}</span>
+            <span className="price">LKR {property.property_price ? parseFloat(property.property_price).toLocaleString() : 'N/A'}</span>
             <span className="location">
               <FaMapMarkerAlt /> {property.district} District, {property.nearby_town}
             </span>
@@ -76,33 +188,32 @@ const PropertyOverview = () => {
         </div>
       </div>
 
-    
       <div className="container main-content">
         <div className="row">
-       
           <div className="col-lg-8">
             <div className="property-gallery">
-              <Carousel interval={null}>
-                <Carousel.Item>
-                  <img
-                    className="d-block w-100"
-                    src={`http://localhost/estate/Backend/api/images/property/${property.property_image}`}
-                    alt="Main property"
-                  />
-                </Carousel.Item>
-                {property.additional_images?.map((img, index) => (
-                  <Carousel.Item key={index}>
-                    <img
-                      className="d-block w-100"
-                      src={`http://localhost/estate/Backend/api/images/property/${img}`}
-                      alt={`Property ${index + 1}`}
-                    />
-                  </Carousel.Item>
-                ))}
-              </Carousel>
+              {carouselImages.length > 0 ? (
+                <Carousel interval={null}>
+                  {carouselImages.map((imgName, index) => (
+                    <Carousel.Item key={index}>
+                      <img
+                        className="d-block w-100"
+                        src={getPublicImageUrl(PROPERTY_IMAGES_BUCKET, imgName)}
+                        alt={`Property ${index + 1}`}
+                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/800x600?text=Image+Load+Error"; }}
+                      />
+                    </Carousel.Item>
+                  ))}
+                </Carousel>
+              ) : (
+                <img
+                  className="d-block w-100"
+                  src="https://placehold.co/800x600?text=No+Images+Available"
+                  alt="No images available"
+                />
+              )}
             </div>
 
-          
             <div className="property-details-section">
               <Nav variant="tabs" activeKey={activeTab} onSelect={(key) => setActiveTab(key)}>
                 <Nav.Item>
@@ -123,7 +234,13 @@ const PropertyOverview = () => {
                 {activeTab === "overview" && (
                   <div className="overview-content">
                     <h3>Property Description</h3>
-                    <p>{property.property_description}</p>
+                    {property.property_description && property.property_description.split('•').map((item, index) =>
+                      item.trim() ? (
+                        <li key={index}>{item.trim()}</li>
+                      ) : null
+                    )}
+                    <br />
+                    <p className="state">{property.property_state}</p>
                   </div>
                 )}
 
@@ -145,33 +262,38 @@ const PropertyOverview = () => {
 
                 {activeTab === "location" && (
                   <div className="location-content">
-                    <h3>Location Details</h3><br></br>
+                    <h3>Location Details</h3><br />
                     <div className="location-grid">
                       <div className="location-item">
                         <h4> Full Address</h4>
                         <p>{property.property_address}</p>
                       </div>
-                      
+                      <hr className="hr1"></hr>
+
                       <div className="location-item">
                         <h5>District</h5>
                         <p>{property.district}</p>
                       </div>
-                      
+                      <hr></hr>
+
                       <div className="location-item">
                         <h5>Nearby Town</h5>
                         <p>{property.nearby_town} ({property.distance_to_town})</p>
                       </div>
-                      
+                      <hr></hr>
+
                       <div className="location-item">
                         <h5> Key Landmarks</h5>
                         <p>{property.landmarks}</p>
                       </div>
-                      
+                      <hr></hr>
+
                       <div className="location-item">
                         <h4><FaRoad /> Accessibility</h4>
                         <p>{property.accessibility}</p>
                       </div>
-                      
+                      <hr></hr>
+
                       <div className="location-item full-width">
                         <h4><FaBus /> Transport Links</h4>
                         <ul className="transport-links">
@@ -185,7 +307,7 @@ const PropertyOverview = () => {
                         </ul>
                       </div>
                     </div>
-                    
+
                     <div className="map-placeholder">
                       <p>Map would display here showing property location in {property.district}</p>
                     </div>
@@ -208,17 +330,17 @@ const PropertyOverview = () => {
             </div>
           </div>
 
-  
           <div className="col-lg-4">
             <div className="agent-contact-card">
               <h3>Contact Agent</h3>
-              {property.agents?.length > 0 ? (
+              {property.agents && property.agents.length > 0 ? (
                 property.agents.map((agent) => (
                   <div key={agent.agent_id} className="agent-info">
                     <img
-                      src={`http://localhost/estate/Backend/api/Images/agent/${agent.agent_image}`}
+                      src={getPublicImageUrl(AGENT_IMAGES_BUCKET, agent.agent_image)}
                       alt={agent.agent_name}
                       className="agent-image"
+                      onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/100x100?text=Agent"; }}
                     />
                     <div className="agent-details">
                       <h4>{agent.agent_name}</h4>
@@ -231,7 +353,7 @@ const PropertyOverview = () => {
                           <FaEnvelope /> {agent.agent_email}
                         </a>
                       </div>
-                      <button 
+                      <button
                         className="enquire-btn"
                         onClick={() => {
                           setContactData(prev => ({
@@ -256,7 +378,7 @@ const PropertyOverview = () => {
               <ul className="summary-list">
                 <li>
                   <span>Price:</span>
-                  <span>LKR {property.property_price.toLocaleString()}</span>
+                  <span>LKR {property.property_price ? parseFloat(property.property_price).toLocaleString() : 'N/A'}</span>
                 </li>
                 <li>
                   <span>Location:</span>
@@ -287,53 +409,30 @@ const PropertyOverview = () => {
         </div>
       </div>
 
-    
+      {/* Custom Modal for Submission Message instead of Alert */}
+      {submissionMessage && (
+        <Modal show={true} onHide={() => setSubmissionMessage(null)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Message</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>{submissionMessage}</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setSubmissionMessage(null)}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
+
+   
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Enquire About This Property</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={async (e) => {
-      e.preventDefault();
-      
- 
-      if (!contactData.user_name || !contactData.user_phone || !contactData.message) {
-        alert("Please fill in all required fields");
-        return;
-      }
-
-      try {
-        const response = await fetch("http://localhost/estate/Backend/api/contact.agent.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(contactData),
-        });
-
-        const result = await response.json();
-
-        if (result.status) {
-          alert("Your enquiry has been submitted successfully!");
-          setShowModal(false);
-       
-          setContactData({
-            user_name: "",
-            user_email: "",
-            user_phone: "",
-            message: "",
-            contact_method: "message",
-            agent_id: contactData.agent_id, 
-            property_id: id,
-          });
-        } else {
-          alert(result.message || "Failed to submit enquiry. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error submitting enquiry:", error);
-        alert("An error occurred. Please try again later.");
-      }
-    }}>
+          <Form onSubmit={handleContactSubmit}>
             <Form.Group className="mb-3">
               <Form.Label>Your Name</Form.Label>
               <Form.Control

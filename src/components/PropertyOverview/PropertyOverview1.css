@@ -48,6 +48,22 @@
   color: #1b1b1b;
   font-size: 3.5rem;
 }
+.overview-content .state{
+  background-color: #f02929;
+  color: #ffffff;
+  font-weight: bold;
+  width: 100px;
+  height: 30px;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(77, 77, 76, 0.8); 
+}
+.overview-content .state:hover{
+   background-color: #d60404;
+}
 
 .property-title-wrapper {
   margin-bottom: 10px;
@@ -105,6 +121,11 @@
   align-items: center;
   gap: 8px;
   color: #38260f;
+}
+.hr1{
+  color: #000000;
+  height: 15px;
+  border-width:3px ;
 }
 
 
@@ -381,8 +402,6 @@
 }
 
 
-
-/* Responsive */
 @media (max-width: 992px) {
   .property-title {
     font-size: 2rem;

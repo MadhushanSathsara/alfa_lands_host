@@ -7,7 +7,7 @@ const Cart = () => {
   const { cartItems, propertiesList, removeFromCart, getTotalCartAmount } = useContext(StoreContext);
   const navigate = useNavigate();
 
-  const deliveryFee = 0; // Assuming there's no delivery fee for land
+  const deliveryFee = 0; 
   const subtotal = getTotalCartAmount();
   const total = subtotal + deliveryFee;
 

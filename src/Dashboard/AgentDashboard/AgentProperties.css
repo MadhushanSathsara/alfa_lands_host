@@ -65,7 +65,7 @@
 
 .property-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Grid layout for columns */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
   gap: 30px;
   width: 100%;
   margin-top: 20px;
@@ -135,7 +135,7 @@
   background-color: #c0392b;
 }
 
-/* Modal Styling */
+
 .propertyModalOverlay {
   position: fixed;
   top: 0;

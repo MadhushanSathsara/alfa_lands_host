@@ -27,7 +27,7 @@
 .footer-header h3 {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #f8b400; /* Gold color */
+  color: #f8b400; 
   margin: 0;
   flex: 1;
   text-align: center;
@@ -101,7 +101,7 @@
   text-decoration: underline;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .footer-top {
     flex-direction: column;

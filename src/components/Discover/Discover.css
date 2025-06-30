@@ -26,7 +26,7 @@
 }
 
 .highli {
-  color: #f0ad1d; /* change to match your theme */
+  color: #f0ad1d; 
 }
 
 .discover-icon {
@@ -41,7 +41,7 @@
   border-radius: 0 50px;
   height: 250px;
   margin-right: 30px;
-  /* font-weight: bold; */
+
 }
 
 .discover-description p {

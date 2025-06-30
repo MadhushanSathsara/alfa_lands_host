@@ -16,7 +16,7 @@ const Header = () => {
         <img src={logoImg} alt="Logo" />
       </div>
 
-      {/* Navigation container for better spacing control */}
+     
       <div className="nav__container">
         <ul className="home__menu">
           <li><Link to="/content">Home</Link></li>
@@ -26,14 +26,14 @@ const Header = () => {
           <li><Link to="/aboutus">About Us</Link></li>
         </ul>
 
-        {/* Toggle button with controlled spacing */}
+   
         <div className="toggle__wrapper">
           <div className="toggle__container">
             <button className="toggle__button" onClick={toggleLogin}>
               &#9776;
             </button>
 
-            {/* Collapsible login */}
+           
             {showLogin && (
               <div className="login__collapse">
                 <Link to="/login">

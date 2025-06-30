@@ -1,7 +1,7 @@
 .layout-container {
   display: flex;
   height: 100vh;
-  margin-top: 80px; /* Reduce if header is smaller */
+  margin-top: 80px; 
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 

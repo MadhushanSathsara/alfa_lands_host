@@ -14,7 +14,7 @@
 }
 
 .home__image {
-  /* width: 1600px; */
+
   height: 100%;
   object-fit: cover;
   filter: brightness(0.7);
@@ -83,7 +83,7 @@
   display:flex;
   position:absolute;
   gap: 30px;
-  /* background: #f4f4f4; */
+
 }
 
 .home__result-card {

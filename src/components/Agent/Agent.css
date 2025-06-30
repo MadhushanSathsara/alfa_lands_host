@@ -44,21 +44,7 @@
     font-size: 1rem;
   }
 }
-  
 
-  /* .agent-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 3rem;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background-color: #ede8e8;
-    transition: transform 0.3s ease;
-   
-
-  } */
   
 
   .agent-card:hover {

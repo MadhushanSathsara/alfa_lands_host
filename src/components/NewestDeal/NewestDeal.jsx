@@ -6,7 +6,6 @@ import { BsSuitHeart } from 'react-icons/bs';
 import { IoBedOutline, IoLocateOutline } from 'react-icons/io5';
 import { GiBathtub, GiHomeGarage } from 'react-icons/gi';
 
-// Import property images
 import property1 from '../../assets/property_1.png';
 import property2 from '../../assets/property_2.png';
 import property3 from '../../assets/property_3.png';

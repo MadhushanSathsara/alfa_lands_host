@@ -26,7 +26,6 @@
   justify-content: center;
 }
 
-/* Make featured-deal 50% width and 200px height */
 .featured-deal {
   flex: 0 0 50%;
   height: 200px;
@@ -39,14 +38,13 @@
   justify-content: space-between;
 }
 
-/* Make the featured image take full width and height */
 .featured-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
 }
 
-/* Small deals beside the featured one, 2 items per row */
+
 .small-deals {
   flex: 0 0 50%;
   display: flex;

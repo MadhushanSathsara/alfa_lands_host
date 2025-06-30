@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import './Property1.css';
+import { supabase } from '../../supabaseClient'; // Ensure this path is correct
+import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs for images
+import './Property1.css'; // Assuming your CSS file contains your styling
+
+// Custom Modal component for Confirm/Alert messages instead of window.confirm/alert
+const CustomAlertDialog = ({ message, onConfirm, onCancel, showConfirm = true }) => {
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content">
+        <p>{message}</p>
+        <div className="modal-actions">
+          {showConfirm && <button onClick={onConfirm} className="modal-button confirm">Yes</button>}
+          <button onClick={onCancel} className="modal-button cancel">{showConfirm ? 'No' : 'Close'}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Property = () => {
   const [properties, setProperties] = useState([]);
@@ -10,62 +26,110 @@ const Property = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [allAgents, setAllAgents] = useState([]);
-  const [assignedAgents, setAssignedAgents] = useState([]);
+  const [assignedAgents, setAssignedAgents] = useState([]); // Stores agent objects for assigned agents
   const [selectedAgentId, setSelectedAgentId] = useState("");
-  const [existingImages, setExistingImages] = useState([]);
-  const [newImages, setNewImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]); // Stores just the filenames (e.g., 'image1.jpg')
+  const [newImages, setNewImages] = useState([]); // Stores File objects for new uploads
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const API_URL = 'http://localhost/estate/backend/api/property.api.php';
+  // State for custom alerts/confirms
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [onConfirmAction, setOnConfirmAction] = useState(null);
+  const [isConfirmation, setIsConfirmation] = useState(false);
 
-  // Fetch all properties
+
+  // Supabase Storage Bucket details
+  // IMPORTANT: Replace 'hddobdmhmzmmdqtmktse' with YOUR actual Supabase Project Reference
+  const SUPABASE_PROJECT_REF = 'hddobdmhmzmmdqtmktse';
+  const SUPABASE_BUCKET_NAME = 'propertyimages'; // Your Supabase Storage bucket name
+  const supabaseStorageUrl = `https://${SUPABASE_PROJECT_REF}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/`;
+
+
+  // Fetch all properties on component mount
   useEffect(() => {
     const fetchProperties = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await axios.get(API_URL);
-        const data = Array.isArray(response.data) ? response.data : [];
-        setProperties(data);
-        setFilteredProperties(data);
-      } catch (error) {
-        console.error("Error fetching properties", error);
+        const { data, error } = await supabase
+          .from('property')
+          .select('*')
+          .order('property_id', { ascending: true }); // Ensure consistent ordering
+
+        if (error) throw error;
+
+        const fetchedData = Array.isArray(data) ? data : [];
+        setProperties(fetchedData);
+        setFilteredProperties(fetchedData);
+      } catch (err) {
+        console.error("Error fetching properties:", err.message);
+        setError("Failed to load properties. Please check your network and RLS policies.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchProperties();
   }, []);
 
-  // Fetch agents and assigned agents when modal opens
+  // Fetch data for modal when it opens and a property is selected
   useEffect(() => {
     if (showModal && selectedProperty?.property_id) {
-      const fetchAgents = async () => {
+      const fetchDataForModal = async () => {
         try {
-          // Fetch all available agents
-          const agentsResponse = await axios.get('http://localhost/estate/backend/api/agents.api.php');
-          setAllAgents(Array.isArray(agentsResponse.data) ? agentsResponse.data : []);
+          // Fetch all agents
+          const { data: agentsData, error: agentsError } = await supabase
+            .from('agents')
+            .select('agent_id, agent_name'); // Select only necessary fields
 
-          // Fetch agents assigned to this property
-          const assignedResponse = await axios.get(
-            `http://localhost/estate/backend/api/property_agent.api.php?property_id=${selectedProperty.property_id}`
-          );
-          setAssignedAgents(Array.isArray(assignedResponse.data) ? assignedResponse.data : []);
+          if (agentsError) throw agentsError;
+          setAllAgents(Array.isArray(agentsData) ? agentsData : []);
 
-          // Fetch property images
-          const imagesResponse = await axios.get(
-            `http://localhost/estate/backend/api/property.images.api.php?property_id=${selectedProperty.property_id}`
-          );
-          if (imagesResponse.data.success && Array.isArray(imagesResponse.data.additional_images)) {
-            setExistingImages(imagesResponse.data.additional_images);
-          } else {
-            setExistingImages([]);
-          }
-        } catch (error) {
-          console.error('Error fetching data:', error);
+          // Fetch assigned agents for this property
+          // This assumes `property_agents` is a join table with `property_id` and `agent_id`
+          // We are also joining to get the agent's name for display
+          const { data: assignedData, error: assignedError } = await supabase
+            .from('property_agents')
+            .select('agent_id, agents(agent_name)') // Select agent_id and join agent_name from agents table
+            .eq('property_id', selectedProperty.property_id);
+
+          if (assignedError) throw assignedError;
+
+          // Map assigned agents data to a flat array of objects { agent_id, agent_name }
+          const mappedAssignedAgents = Array.isArray(assignedData)
+            ? assignedData.map(item => ({
+                agent_id: item.agent_id,
+                agent_name: item.agents?.agent_name || `Agent ${item.agent_id}` // Use joined name or fallback
+              }))
+            : [];
+          setAssignedAgents(mappedAssignedAgents);
+
+          // List images from Supabase Storage for the selected property's folder
+          const { data: imagesList, error: imagesError } = await supabase.storage
+            .from(SUPABASE_BUCKET_NAME)
+            .list(`${selectedProperty.property_id}/`, {
+              // Can add options like `limit`, `offset`, `search`
+            });
+
+          if (imagesError) throw imagesError;
+
+          const imageFilenames = Array.isArray(imagesList)
+            ? imagesList.map(img => img.name).filter(name => name !== '.emptyFolderPlaceholder') // Filter out placeholder files
+            : [];
+          setExistingImages(imageFilenames);
+
+        } catch (err) {
+          console.error('Error fetching modal data:', err.message);
           setAllAgents([]);
           setAssignedAgents([]);
           setExistingImages([]);
+          // Optionally show an error message to the user here
         }
       };
-      fetchAgents();
+      fetchDataForModal();
     }
-  }, [showModal, selectedProperty]);
+  }, [showModal, selectedProperty]); // Dependencies should include Supabase bucket name if it changes dynamically, but typically it's static.
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
@@ -76,26 +140,86 @@ const Property = () => {
     );
   };
 
-  const handleDelete = async (property_id) => {
-    if (!window.confirm("Are you sure you want to delete this property?")) return;
+  // --- Custom Alert/Confirm Functions (replacing window.confirm/alert) ---
+  const showCustomAlert = (message, isConfirm = false, onConfirm = null) => {
+    setAlertMessage(message);
+    setIsConfirmation(isConfirm);
+    setOnConfirmAction(() => onConfirm); // Use a functional update to store the callback
+    setShowAlert(true);
+  };
 
-    try {
-      const response = await axios.delete(API_URL, {
-        data: { property_id },
-        headers: { 'Content-Type': 'application/json' },
-      });
+  const hideCustomAlert = () => {
+    setShowAlert(false);
+    setAlertMessage('');
+    setIsConfirmation(false);
+    setOnConfirmAction(null);
+  };
 
-      if (response.data.status) {
-        alert("Property deleted successfully!");
+  const handleAlertConfirm = () => {
+    if (onConfirmAction) {
+      onConfirmAction();
+    }
+    hideCustomAlert();
+  };
+  // --- END Custom Alert/Confirm Functions ---
+
+
+  // Delete Property: Deletes images from storage first, then the property record
+  const handleDelete = (property_id) => {
+    showCustomAlert("Are you sure you want to delete this property and all its images?", true, async () => {
+      try {
+        // First, delete associated entries in property_agents table
+        const { error: agentLinkError } = await supabase
+          .from('property_agents')
+          .delete()
+          .eq('property_id', property_id);
+
+        if (agentLinkError) {
+          console.error("Error deleting agent links for property:", agentLinkError.message);
+          // Don't throw, try to delete the property anyway
+        } else {
+          console.log(`Successfully deleted agent links for property ${property_id}`);
+        }
+
+        // Next, delete associated images from Supabase Storage
+        const { data: imagesList, error: listError } = await supabase.storage
+          .from(SUPABASE_BUCKET_NAME)
+          .list(`${property_id}/`);
+
+        if (listError) {
+          console.error("Error listing images for deletion:", listError.message);
+          // Don't throw, try to delete the property anyway
+        } else if (imagesList.length > 0) {
+          // Construct full paths for removal
+          const filesToDelete = imagesList.map(img => `${property_id}/${img.name}`);
+          const { error: removeError } = await supabase.storage
+            .from(SUPABASE_BUCKET_NAME)
+            .remove(filesToDelete);
+
+          if (removeError) {
+            console.error("Error deleting property images from storage:", removeError.message);
+            // Don't block property deletion if images fail
+          } else {
+            console.log(`Successfully deleted ${filesToDelete.length} images for property ${property_id}`);
+          }
+        }
+
+        // Finally, delete the property record from the database
+        const { error: dbError } = await supabase
+          .from('property')
+          .delete()
+          .eq('property_id', property_id);
+
+        if (dbError) throw dbError;
+
+        showCustomAlert("Property deleted successfully!", false);
         setProperties(prev => prev.filter(p => p.property_id !== property_id));
         setFilteredProperties(prev => prev.filter(p => p.property_id !== property_id));
-      } else {
-        alert("Delete failed: " + (response.data.message || "Unknown error"));
+      } catch (err) {
+        console.error("Delete property error:", err.message);
+        showCustomAlert("Error deleting property: " + err.message, false);
       }
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Error deleting property. See console for details.");
-    }
+    });
   };
 
   const handleEdit = (property) => {
@@ -107,37 +231,50 @@ const Property = () => {
     setShowModal(false);
     setSelectedProperty(null);
     setNewImages([]);
+    setExistingImages([]); // Clear existing images on close too
+    setSelectedAgentId(""); // Clear selected agent
+    setAllAgents([]); // Clear agents
+    setAssignedAgents([]); // Clear assigned agents
   };
 
+  // Save changes to property details
   const handleSaveChanges = async () => {
+    if (!selectedProperty) return;
+
     try {
       const updateData = {
-        property_id: selectedProperty.property_id,
         property_name: selectedProperty.property_name,
         property_address: selectedProperty.property_address,
         property_description: selectedProperty.property_description,
-        property_price: selectedProperty.property_price,
+        property_price: parseFloat(selectedProperty.property_price), // Ensure price is a number
         property_state: selectedProperty.property_state,
-        property_category: selectedProperty.property_category
+        property_category: selectedProperty.property_category,
+        beds: selectedProperty.beds,
+        baths: selectedProperty.baths,
+        garage: selectedProperty.garage,
+        // property_image is not updated here, it's managed by separate image upload/delete
       };
 
-      const response = await axios.put(API_URL, updateData);
+      const { data, error } = await supabase
+        .from('property')
+        .update(updateData)
+        .eq('property_id', selectedProperty.property_id)
+        .select(); // Select the updated row to get fresh data
 
-      if (response.data.status) {
-        alert("Property updated successfully!");
-        setProperties(prev => prev.map(p => 
-          p.property_id === selectedProperty.property_id ? {...p, ...updateData} : p
-        ));
-        setFilteredProperties(prev => prev.map(p => 
-          p.property_id === selectedProperty.property_id ? {...p, ...updateData} : p
-        ));
-        handleClose();
-      } else {
-        alert(`Update failed: ${response.data.message}`);
-      }
-    } catch (error) {
-      console.error("Error updating property:", error);
-      alert("Failed to update property.");
+      if (error) throw error;
+
+      showCustomAlert("Property updated successfully!", false);
+      // Update local state with the newly updated property data
+      setProperties(prev => prev.map(p =>
+        p.property_id === selectedProperty.property_id ? data[0] : p
+      ));
+      setFilteredProperties(prev => prev.map(p =>
+        p.property_id === selectedProperty.property_id ? data[0] : p
+      ));
+      handleClose(); // Close modal after successful update
+    } catch (err) {
+      console.error("Error updating property:", err.message);
+      showCustomAlert(`Failed to update property: ${err.message}`, false);
     }
   };
 
@@ -145,133 +282,190 @@ const Property = () => {
     const { name, value } = e.target;
     setSelectedProperty(prev => ({
       ...prev,
-      [name]: name === 'property_price' ? parseFloat(value) : value
+      // Convert relevant fields to numbers
+      [name]: (name === 'property_price' || name === 'beds' || name === 'baths' || name === 'garage')
+              ? (value === '' ? null : parseFloat(value)) // Handle empty string for numbers
+              : value
     }));
   };
 
-  const handleDeleteImage = async (filename) => {
-    if (!window.confirm("Delete this image?")) return;
+  // Delete a single image from Supabase Storage
+  const handleDeleteImage = (filename) => {
+    showCustomAlert("Delete this image?", true, async () => {
+      try {
+        if (!selectedProperty?.property_id) {
+          showCustomAlert("Property ID not found for image deletion.", false);
+          return;
+        }
 
-    try {
-      const response = await axios.delete('http://localhost/estate/backend/api/property.images.api.php', {
-        data: {
-          filename,
-          property_id: selectedProperty.property_id,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+        const filePath = `${selectedProperty.property_id}/${filename}`;
+        const { error: removeError } = await supabase.storage
+          .from(SUPABASE_BUCKET_NAME)
+          .remove([filePath]);
 
-      if (response.data.success) {
+        if (removeError) throw removeError;
+
+        showCustomAlert("Image deleted!", false);
         setExistingImages(prev => prev.filter(img => img !== filename));
-        alert("Image deleted");
-      } else {
-        alert("Failed to delete image: " + response.data.message);
+
+        // If the deleted image was the main property_image, update the property record
+        if (selectedProperty.property_image === filename) {
+          // Try to set another existing image as the main one, or null if no others
+          const remainingImages = existingImages.filter(img => img !== filename);
+          const newMainImage = remainingImages.length > 0 ? remainingImages[0] : null;
+
+          const { error: updatePropError } = await supabase
+            .from('property')
+            .update({ property_image: newMainImage })
+            .eq('property_id', selectedProperty.property_id);
+
+          if (updatePropError) {
+            console.error("Error updating main property image after delete:", updatePropError.message);
+          } else {
+            setSelectedProperty(prev => ({ ...prev, property_image: newMainImage }));
+          }
+        }
+
+      } catch (err) {
+        console.error("Error deleting image:", err.message);
+        showCustomAlert(`Failed to delete image: ${err.message}`, false);
       }
-    } catch (err) {
-      console.error("Delete error", err);
-      alert("Error deleting image. See console.");
-    }
+    });
   };
 
+  // Upload new images to Supabase Storage
   const uploadNewImages = async () => {
-    if (newImages.length === 0) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('property_id', selectedProperty.property_id);
-      newImages.forEach(img => formData.append('images[]', img));
-
-      const response = await axios.post(
-        'http://localhost/estate/backend/api/property.images.api.php', 
-        formData, 
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-
-      if (response.data.success) {
-        alert('Images uploaded!');
-        setNewImages([]);
-        setExistingImages(prev => [...prev, ...response.data.uploadedImages]);
-      } else {
-        alert('Image upload failed: ' + (response.data.message || 'Unknown error'));
-      }
-    } catch (err) {
-      console.error('Image upload error:', err);
-      alert('Image upload error, see console.');
+    if (newImages.length === 0) {
+      showCustomAlert("No new images selected for upload.", false);
+      return;
     }
+    if (!selectedProperty?.property_id) {
+      showCustomAlert("Property ID not found for image upload.", false);
+      return;
+    }
+
+    const uploadedImageNames = [];
+    let uploadErrors = [];
+    let initialMainImageSet = false; // Flag to track if main image has been set
+
+    for (const file of newImages) {
+      const fileExtension = file.name.split('.').pop();
+      const uniqueFileName = `${uuidv4()}.${fileExtension}`; // Generate unique filename
+      const filePath = `${selectedProperty.property_id}/${uniqueFileName}`; // Path in storage bucket
+
+      try {
+        const { data, error } = await supabase.storage
+          .from(SUPABASE_BUCKET_NAME)
+          .upload(filePath, file, {
+            cacheControl: '3600', // Cache for 1 hour
+            upsert: false // Do not overwrite existing files with same name
+          });
+
+        if (error) throw error;
+        uploadedImageNames.push(uniqueFileName); // Store just the filename
+
+        // If this is the first image being uploaded AND property_image is null/empty, set it as main
+        if (!selectedProperty.property_image && !initialMainImageSet) {
+          const { error: updatePropError } = await supabase
+            .from('property')
+            .update({ property_image: uniqueFileName })
+            .eq('property_id', selectedProperty.property_id);
+
+          if (updatePropError) {
+            console.error("Error setting main property image:", updatePropError.message);
+          } else {
+            setSelectedProperty(prev => ({ ...prev, property_image: uniqueFileName }));
+            initialMainImageSet = true; // Mark as set
+          }
+        }
+
+      } catch (err) {
+        console.error(`Error uploading ${file.name}:`, err.message);
+        uploadErrors.push(file.name);
+      }
+    }
+
+    if (uploadErrors.length > 0) {
+      showCustomAlert(`Failed to upload some images: ${uploadErrors.join(', ')}`, false);
+    } else {
+      showCustomAlert('Images uploaded successfully!', false);
+    }
+
+    setNewImages([]); // Clear new images selection
+    // Update existing images state to include newly uploaded ones
+    setExistingImages(prev => [...prev, ...uploadedImageNames]);
   };
 
+  // Assign agent to property
   const handleAssignAgent = async () => {
     if (!selectedAgentId) {
-      alert("Please select an agent first.");
+      showCustomAlert("Please select an agent first.", false);
       return;
     }
 
     const agentId = parseInt(selectedAgentId);
     if (isNaN(agentId)) {
-      alert("Invalid agent selected.");
+      showCustomAlert("Invalid agent selected.", false);
       return;
     }
 
-   
+    // Check if agent is already assigned locally (optimistic check)
     if (assignedAgents.some(agent => agent.agent_id === agentId)) {
-      alert("This agent is already assigned to the property.");
+      showCustomAlert("This agent is already assigned to the property.", false);
       return;
     }
 
     try {
-      const response = await axios.post(
-        'http://localhost/estate/backend/api/property_agent.api.php', 
-        {
+      // Insert into the join table `property_agents`
+      const { error } = await supabase
+        .from('property_agents')
+        .insert({
           property_id: selectedProperty.property_id,
           agent_id: agentId
-        }
-      );
+        });
 
-      if (response.data.success) {
-        const assignedAgent = allAgents.find(agent => agent.agent_id == agentId);
-        if (assignedAgent) {
-          setAssignedAgents(prev => [...prev, assignedAgent]);
-          setSelectedAgentId("");
-          alert("Agent assigned successfully.");
-        } else {
-          alert("Agent assigned but not found in local list. Please refresh.");
-        }
-      } else {
-        alert("Failed to assign agent: " + (response.data.message || "Unknown error"));
+      if (error) throw error;
+
+      showCustomAlert("Agent assigned successfully.", false);
+      const assignedAgent = allAgents.find(agent => agent.agent_id === agentId);
+      if (assignedAgent) {
+        setAssignedAgents(prev => [...prev, assignedAgent]);
+        setSelectedAgentId(""); // Clear selected agent after assignment
       }
-    } catch (error) {
-      console.error("Error assigning agent:", error);
-      alert("Error assigning agent. See console for details.");
+    } catch (err) {
+      console.error("Error assigning agent:", err.message);
+      showCustomAlert(`Failed to assign agent: ${err.message}`, false);
     }
   };
 
-  const handleRemoveAgent = async (agentId) => {
-    if (!window.confirm("Remove this agent from the property?")) return;
+  // Remove agent from property
+  const handleRemoveAgent = (agentId) => {
+    showCustomAlert("Remove this agent from the property?", true, async () => {
+      try {
+        const { error } = await supabase
+          .from('property_agents')
+          .delete()
+          .eq('property_id', selectedProperty.property_id)
+          .eq('agent_id', agentId);
 
-    try {
-      const response = await axios.delete(
-        'http://localhost/estate/backend/api/property_agent.api.php', 
-        { 
-          data: { 
-            property_id: selectedProperty.property_id, 
-            agent_id: agentId 
-          } 
-        }
-      );
+        if (error) throw error;
 
-      if (response.data.success) {
+        showCustomAlert("Agent removed successfully.", false);
         setAssignedAgents(prev => prev.filter(a => a.agent_id !== agentId));
-        alert("Agent removed successfully.");
-      } else {
-        alert("Failed to remove agent: " + (response.data.message || "Unknown error"));
+      } catch (err) {
+        console.error("Error removing agent:", err.message);
+        showCustomAlert(`Failed to remove agent: ${err.message}`, false);
       }
-    } catch (error) {
-      console.error("Error removing agent:", error);
-      alert("Error removing agent. See console for details.");
-    }
+    });
   };
+
+  if (loading) {
+    return <div className="text-center p-4">Loading properties...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center p-4 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="property-container">
@@ -297,31 +491,42 @@ const Property = () => {
       </div>
 
       <div className="property-cards">
-        {filteredProperties.map(property => (
-          <div key={property.property_id} className="property-card">
-            <img
-              src={property.property_image || 'http://localhost/estate/backend/api/Images/property/default.jpg'}
-              alt={property.property_name}
-              className="property-image"
-            />
-            <div className="property-body">
-              <h3 className="property-title">{property.property_name}</h3>
-              <p><strong>Price:</strong> ${property.property_price}</p>
-              <p><strong>Location:</strong> {property.property_address}</p>
-              <p><strong>Category:</strong> {property.property_category}</p>
-              <p><strong>Description:</strong> {property.property_description}</p>
-              <p><strong>State:</strong> {property.property_state}</p>
-              <div className="card-buttons">
-                <button className="delete-btn" onClick={() => handleDelete(property.property_id)}>
-                  Delete
-                </button>
-                <button className="edit-btn" onClick={() => handleEdit(property)}>Edit</button>
+        {filteredProperties.length === 0 ? (
+          <p className="text-center col-span-full">No properties available for this category.</p>
+        ) : (
+          filteredProperties.map(property => (
+            <div key={property.property_id} className="property-card">
+              <img
+                src={property.property_image ? `${supabaseStorageUrl}${property.property_id}/${property.property_image}` : 'https://placehold.co/300x200?text=No+Image'}
+                alt={property.property_name}
+                className="property-image"
+                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/300x200?text=Image+Load+Error"; }}
+              />
+              <div className="property-body">
+                <h3 className="property-title">{property.property_name}</h3>
+                <p><strong>Price:</strong> ${property.property_price ? property.property_price.toLocaleString() : 'N/A'}</p>
+                <p><strong>Location:</strong> {property.property_address}</p>
+                <p><strong>Category:</strong> {property.property_category}</p>
+                <p><strong>Description:</strong> {property.property_description}</p>
+                <p><strong>State:</strong> {property.property_state}</p>
+                {/* Assuming beds, baths, garage exist now in property table */}
+                <p><strong>Beds:</strong> {property.beds || 'N/A'}</p>
+                <p><strong>Baths:</strong> {property.baths || 'N/A'}</p>
+                <p><strong>Garage:</strong> {property.garage || 'N/A'}</p>
+
+                <div className="card-buttons">
+                  <button className="delete-btn" onClick={() => handleDelete(property.property_id)}>
+                    Delete
+                  </button>
+                  <button className="edit-btn" onClick={() => handleEdit(property)}>Edit</button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
+      {/* Edit Property Modal */}
       {showModal && selectedProperty && (
         <div className="propertyModalOverlay" onClick={handleClose}>
           <div className="propertyModalContent" onClick={(e) => e.stopPropagation()}>
@@ -332,47 +537,47 @@ const Property = () => {
             <div className="propertyModalBody">
               <div className="propertyFormGroup">
                 <label>Name</label>
-                <input 
-                  name="property_name" 
-                  value={selectedProperty.property_name} 
-                  onChange={handleChange} 
-                  className="propertyFormControl" 
+                <input
+                  name="property_name"
+                  value={selectedProperty.property_name || ''}
+                  onChange={handleChange}
+                  className="propertyFormControl"
                 />
               </div>
               <div className="propertyFormGroup">
                 <label>Price</label>
-                <input 
-                  name="property_price" 
-                  type="number" 
-                  value={selectedProperty.property_price} 
-                  onChange={handleChange} 
-                  className="propertyFormControl" 
+                <input
+                  name="property_price"
+                  type="number"
+                  value={selectedProperty.property_price || 0}
+                  onChange={handleChange}
+                  className="propertyFormControl"
                 />
               </div>
               <div className="propertyFormGroup">
                 <label>Location</label>
-                <input 
-                  name="property_address" 
-                  value={selectedProperty.property_address} 
-                  onChange={handleChange} 
-                  className="propertyFormControl" 
+                <input
+                  name="property_address"
+                  value={selectedProperty.property_address || ''}
+                  onChange={handleChange}
+                  className="propertyFormControl"
                 />
               </div>
               <div className="propertyFormGroup">
                 <label>Description</label>
-                <textarea 
-                  name="property_description" 
-                  value={selectedProperty.property_description} 
-                  onChange={handleChange} 
-                  className="propertyFormControl" 
+                <textarea
+                  name="property_description"
+                  value={selectedProperty.property_description || ''}
+                  onChange={handleChange}
+                  className="propertyFormControl"
                 />
               </div>
               <div className="propertyFormGroup">
                 <label>State</label>
-                <select 
-                  name="property_state" 
-                  value={selectedProperty.property_state} 
-                  onChange={handleChange} 
+                <select
+                  name="property_state"
+                  value={selectedProperty.property_state || 'Available'}
+                  onChange={handleChange}
                   className="propertyFormControl"
                 >
                   {['Available', 'Sold', 'Pending'].map(state => (
@@ -382,16 +587,47 @@ const Property = () => {
               </div>
               <div className="propertyFormGroup">
                 <label>Category</label>
-                <select 
-                  name="property_category" 
-                  value={selectedProperty.property_category} 
-                  onChange={handleChange} 
+                <select
+                  name="property_category"
+                  value={selectedProperty.property_category || 'House'}
+                  onChange={handleChange}
                   className="propertyFormControl"
                 >
                   {['House', 'Apartment', 'Commercial', 'Land', 'Villa', 'Cabin'].map(category => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
+              </div>
+              {/* Added Beds, Baths, Garage inputs */}
+              <div className="propertyFormGroup">
+                <label>Beds</label>
+                <input
+                  name="beds"
+                  type="number"
+                  value={selectedProperty.beds || 0}
+                  onChange={handleChange}
+                  className="propertyFormControl"
+                />
+              </div>
+              <div className="propertyFormGroup">
+                <label>Baths</label>
+                <input
+                  name="baths"
+                  type="number"
+                  value={selectedProperty.baths || 0}
+                  onChange={handleChange}
+                  className="propertyFormControl"
+                />
+              </div>
+              <div className="propertyFormGroup">
+                <label>Garage</label>
+                <input
+                  name="garage"
+                  type="number"
+                  value={selectedProperty.garage || 0}
+                  onChange={handleChange}
+                  className="propertyFormControl"
+                />
               </div>
 
               <div className="propertyFormGroup">
@@ -452,12 +688,15 @@ const Property = () => {
                 </div>
 
                 <div className="imagePreviewWrapper">
+                  {/* Display existing images from Supabase Storage */}
                   {existingImages.map((filename, idx) => (
                     <div key={idx} className="image-preview-container">
                       <img
-                        src={`http://localhost/estate/backend/api/Images/property/${filename}`}
+                        // Construct the image URL for existing images from Supabase Storage
+                        src={`${supabaseStorageUrl}${selectedProperty.property_id}/${filename}`}
                         alt={`Property Image ${idx}`}
                         className="image-preview"
+                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/150x100?text=Image+Load+Error"; }}
                       />
                       <button
                         className="delete-image-btn"
@@ -469,12 +708,14 @@ const Property = () => {
                     </div>
                   ))}
 
+                  {/* Display newly selected images (before upload) as local URLs */}
                   {newImages.map((file, idx) => (
                     <div key={`new-${idx}`} className="image-preview-container">
                       <img
                         src={URL.createObjectURL(file)}
                         alt={`New Upload ${idx}`}
                         className="image-preview"
+                        onLoad={() => URL.revokeObjectURL(file.preview)} // Clean up object URL after load
                       />
                     </div>
                   ))}
@@ -493,6 +734,16 @@ const Property = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Custom Alert/Confirm Modal */}
+      {showAlert && (
+        <CustomAlertDialog
+          message={alertMessage}
+          onConfirm={handleAlertConfirm}
+          onCancel={hideCustomAlert}
+          showConfirm={isConfirmation}
+        />
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import axios from 'axios';
 import './AgentProperties.css';
 
 const AgentProperties = ({ agent_id: propAgentId }) => {
-  const agent_id = propAgentId || localStorage.getItem("agent_id"); // ✅ get from localStorage if not passed
+  const agent_id = propAgentId || localStorage.getItem("agent_id"); 
 
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
@@ -82,11 +82,7 @@ const AgentProperties = ({ agent_id: propAgentId }) => {
         </p>
       ) : (
         <ul>
-          {/* {properties.map((property) => (
-            <li key={property.property_id}>
-              <strong>{property.property_name}</strong> - {property.property_address}
-            </li>
-          ))} */}
+         
         </ul>
       )}
 

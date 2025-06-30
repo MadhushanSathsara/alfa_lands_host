@@ -7,7 +7,7 @@ const AgentDashboard = () => {
 
   useEffect(() => {
     const fetchAgentData = async () => {
-      const agentId = localStorage.getItem("agent_id");  // ✅ Dynamic ID
+      const agentId = localStorage.getItem("agent_id"); 
       if (!agentId) {
         setAgentData({ name: '', id: '', error: 'No agent ID found' });
         return;
@@ -37,7 +37,7 @@ const AgentDashboard = () => {
         <main className="dashboard-main">
           <header className="dashboard-header">
             <div className="dashboard-greeting">
-              <h2>Hi, {agentData.name || 'Agent'}</h2> {/* Dynamic greeting */}
+              <h2>Hi, {agentData.name || 'Agent'}</h2> 
               <p>Ready to start your day with some pitch decks?</p>
             </div>
             <div className="dashboard-profile">
@@ -46,14 +46,14 @@ const AgentDashboard = () => {
                 <FaBell className="dashboard-icon" />
               </div>
               <div className="dashboard-profile-info">
-                <div className="dashboard-profile-initials">{agentData.name ? agentData.name[0] : 'A'}</div> {/* Display initials */}
-                <span>{agentData.name || 'Agent Name'}</span> {/* Dynamic name */}
+                <div className="dashboard-profile-initials">{agentData.name ? agentData.name[0] : 'A'}</div> 
+                <span>{agentData.name || 'Agent Name'}</span> 
               </div>
             </div>
           </header>
 
           <section className="dashboard-agent-id">
-            <h4>User ID: {agentData.id || 'N/A'}</h4> {/* Display the agent's ID */}
+            <h4>User ID: {agentData.id || 'N/A'}</h4> 
           </section>
 
           <section className="dashboard-overview">
