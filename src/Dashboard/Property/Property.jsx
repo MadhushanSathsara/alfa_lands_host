@@ -497,7 +497,7 @@ const Property = () => {
           filteredProperties.map(property => (
             <div key={property.property_id} className="property-card">
               <img
-                src={property.property_image ? `${supabaseStorageUrl}${property.property_id}/${property.property_image}` : 'https://placehold.co/300x200?text=No+Image'}
+                src={property.property_image ? `${supabaseStorageUrl}${property.property_image}` : 'https://placehold.co/300x200?text=No+Image'}
                 alt={property.property_name}
                 className="property-image"
                 onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/300x200?text=Image+Load+Error"; }}
