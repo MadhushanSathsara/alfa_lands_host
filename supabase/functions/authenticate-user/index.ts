@@ -13,7 +13,7 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 // Define allowed origins for CORS
 const ALLOWED_ORIGINS = [
   'http://localhost:5173', // For local development with Vite
-  'https://your-vercel-app-name.vercel.app', // IMPORTANT: Replace with your actual Vercel domain AFTER deployment
+  'https://alfa-lands-host.vercel.app', // IMPORTANT: Replace with your actual Vercel domain AFTER deployment
   // Example: 'https://estate-project-ab1c2d3e.vercel.app'
   // Add other production domains if you have custom domains configured in Vercel
 ];
@@ -32,6 +32,7 @@ function getCorsHeaders(request: Request) {
   // In a strict production setup, you might return a 403 Forbidden here if origin is not allowed
   return {
     'Access-Control-Allow-Origin': 'http://localhost:5173', // Default for local testing if no matching origin
+    'Access-Control-Allow-Origin': 'https://alfa-lands-host.vercel.app',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
