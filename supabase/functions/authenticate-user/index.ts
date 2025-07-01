@@ -1,26 +1,19 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+// index.ts — Supabase Edge Function
 
-// Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-
-// Standard Deno imports
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.1'
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
-// REMOVED: import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts'; // bcrypt is no longer used
 
-// Define allowed origins for CORS
+// ✅ Allowed origins
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173', // For local development with Vite
-  'https://alfa-lands-host.vercel.app', // IMPORTANT: Replace with your actual Vercel domain AFTER deployment
-  // Example: 'https://estate-project-ab1c2d3e.vercel.app'
-  // Add other production domains if you have custom domains configured in Vercel
+  'http://localhost:5173',             // Local dev
+  'https://alfa-lands-host.vercel.app' // Your deployed Vercel frontend
 ];
 
-// Helper function to dynamically set CORS headers based on the request origin
+// ✅ Helper: Generate CORS headers if allowed
 function getCorsHeaders(request: Request) {
   const origin = request.headers.get('Origin');
+
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return {
       'Access-Control-Allow-Origin': origin,
@@ -28,32 +21,31 @@ function getCorsHeaders(request: Request) {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
   }
-  // Fallback for local development or if origin is not in the allowed list
-  // In a strict production setup, you might return a 403 Forbidden here if origin is not allowed
-  return {
-    'Access-Control-Allow-Origin': 'http://localhost:5173', // Default for local testing if no matching origin
-    'Access-Control-Allow-Origin': 'https://alfa-lands-host.vercel.app',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
+
+  // ❌ Not allowed
+  return null;
 }
 
-
+// ✅ Serve function
 serve(async (req) => {
-  console.log("Function 'index' received a request.");
+  console.log("Function 'authenticate-user' invoked.");
 
-  const corsHeaders = getCorsHeaders(req); // Get dynamic CORS headers
+  const corsHeaders = getCorsHeaders(req);
 
-  // Handle CORS preflight requests
+  if (!corsHeaders) {
+    console.warn("Blocked request from disallowed origin.");
+    return new Response('Origin not allowed', { status: 403 });
+  }
+
+  // ✅ Handle preflight CORS request
   if (req.method === 'OPTIONS') {
-    console.log("Handling OPTIONS preflight request.");
+    console.log("Handling preflight OPTIONS request.");
     return new Response(null, {
-      status: 204, // No Content
+      status: 204,
       headers: corsHeaders,
     });
   }
 
-  // Ensure it's a POST request for actual login logic
   if (req.method !== 'POST') {
     console.warn(`Method Not Allowed: ${req.method}`);
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
@@ -64,14 +56,9 @@ serve(async (req) => {
 
   try {
     const { username, password } = await req.json();
-    console.log(`Attempting login for username: ${username}`);
-    // WARNING: For development only. Storing and comparing plain-text passwords is highly insecure.
-    // In a production environment, you MUST hash passwords using bcrypt (or similar) before storing them,
-    // and then compare the provided password against the hashed password.
-    console.warn("SECURITY WARNING: Comparing passwords without hashing. DO NOT USE IN PRODUCTION!");
+    console.log(`Login attempt for: ${username}`);
 
     if (!username || !password) {
-      console.warn("Missing username or password in request body.");
       return new Response(JSON.stringify({ success: false, message: 'Username and password are required.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -82,91 +69,68 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
-        console.error("Missing Supabase environment variables! Check secrets (PROJECT_URL, SERVICE_ROLE_KEY).");
-        return new Response(JSON.stringify({ success: false, message: 'Server configuration error.' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
+      console.error("Missing Supabase environment variables!");
+      return new Response(JSON.stringify({ success: false, message: 'Server configuration error.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
-    // Create a Supabase client with service_role privileges to query the 'users' table directly.
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    console.log("Supabase admin client initialized.");
+
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id, username, password, role')
+      .eq('username', username)
+      .single();
+
+    if (userError && userError.code !== 'PGRST116') {
+      console.error('Database query error:', userError.message);
+    }
 
     let userFound = null;
-    let userAssignedRole = null; // This will be the simplified role sent to the frontend ('admin' or 'agent')
+    let userRole = null;
     let userId = null;
 
-    console.log(`Querying 'users' table for username: ${username}`);
-    // Fetch user data including id, username, password, and their specific role from the database.
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users') // Assuming your user authentication details are in a table named 'users'
-      .select('id, username, password, role') // Select the necessary columns
-      .eq('username', username) // Filter by the provided username
-      .single(); // Expect a single record
-
-    // Handle potential database query errors, but allow to proceed if user not found (error code 'PGRST116')
-    if (userError && userError.code !== 'PGRST116') { // 'PGRST116' typically means 'No rows found'
-      console.error('Error querying users table:', userError.message);
-    }
-
-    // Check if user data was found and the password matches
     if (userData) {
-      console.log("User data found. Performing direct password comparison (insecure for production)...");
-      const passwordMatch = (password === userData.password); // Direct comparison (replace with bcrypt.compare in production)
-      console.log(`Password match result: ${passwordMatch}`);
-
-      if (passwordMatch) {
+      if (password === userData.password) {
         userFound = userData;
         userId = userData.id;
 
-        // UPDATED ROLE MAPPING LOGIC FOR STRICT ACCESS CONTROL
         if (userData.role === 'admin') {
-            userAssignedRole = 'admin'; // ONLY 'admin' database role gets 'admin' frontend role
-            console.log(`User ${username} (DB Role: ${userData.role}) assigned frontend role: 'admin'`);
+          userRole = 'admin';
         } else if (
-            userData.role === 'executive team' ||
-            userData.role === 'marketing team' ||
-            userData.role === 'agent' ||
-            userData.role === 'inspector' ||
-            userData.role === 'supervise team'
+          ['executive team', 'marketing team', 'agent', 'inspector', 'supervise team'].includes(userData.role)
         ) {
-            // All other specified roles map to 'agent' frontend role
-            userAssignedRole = 'agent';
-            console.log(`User ${username} (DB Role: ${userData.role}) assigned frontend role: 'agent'`);
+          userRole = 'agent';
         } else {
-            userAssignedRole = 'unknown'; // Fallback for any unhandled or unrecognized roles
-            console.warn(`Unrecognized database role for user ${username}: ${userData.role}. Assigned frontend role: 'unknown'.`);
+          userRole = 'unknown';
         }
       }
-    } else {
-      console.log(`No user found with username: ${username} or password mismatch.`);
     }
 
-    // If a user was found and assigned a valid role, return success
-    if (userFound && userAssignedRole && userAssignedRole !== 'unknown') {
+    if (userFound && userRole && userRole !== 'unknown') {
       return new Response(JSON.stringify({
         success: true,
         message: 'Login successful',
-        role: userAssignedRole, // Return the simplified role ('admin' or 'agent')
-        agent_id: userId, // Keeping agent_id as the key for frontend consistency
+        role: userRole,
+        agent_id: userId,
       }), {
         status: 200,
-        headers: corsHeaders, // Use the dynamic CORS headers
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     } else {
-      console.log(`Login failed for username: ${username}: Invalid credentials or unassigned role.`);
       return new Response(JSON.stringify({ success: false, message: 'Invalid username or password.' }), {
-        status: 401, // Unauthorized
-        headers: corsHeaders, // Use the dynamic CORS headers
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
   } catch (error) {
-    console.error('Unhandled Edge Function error:', error.message, error.stack);
+    console.error('Unhandled error:', error);
     return new Response(JSON.stringify({ success: false, message: 'Internal server error.' }), {
       status: 500,
-      headers: corsHeaders, // Use the dynamic CORS headers
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
 });
