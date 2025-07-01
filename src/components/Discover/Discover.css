@@ -54,3 +54,63 @@
   justify-content: center;
  
 }
+
+@media screen and (max-width: 768px) {
+  .discover-container {
+    flex-direction: column; /* Stack items vertically */
+    width: auto; /* Allow width to be determined by content/viewport */
+    margin-left: 0; /* Remove fixed left margin */
+    padding: 20px; /* Reduce padding for smaller screens */
+    border-radius: 10px; /* Adjust border-radius if desired */
+  }
+
+  .discover-title {
+    width: 100%; /* Take full width */
+    text-align: center; /* Center the title text */
+    justify-content: center; /* Center items within flex container */
+    margin-bottom: 20px; /* Add some space below the title */
+    flex-direction: column; /* Stack title and icon if they are inline */
+  }
+
+  .discover-title h2 {
+    font-size: 28px; /* Smaller font size for mobile */
+    text-align: center;
+  }
+
+  .highli {
+    /* Keep color */
+  }
+
+  .discover-icon {
+    font-size: 24px; /* Smaller icon size */
+    margin-bottom: 20px; /* Adjust margin */
+    margin-top: 10px; /* Add some space above icon */
+  }
+
+  .discover-description {
+    flex: none; /* Remove flex grow/shrink for mobile */
+    width: 100%; /* Take full width */
+    height: auto; /* Allow height to adjust to content */
+    margin-right: 0; /* Remove fixed right margin */
+    border-radius: 16px; /* Adjust border-radius for a full-width block */
+    padding: 20px; /* Add padding inside the description box */
+  }
+
+  .discover-description p {
+    font-size: 16px; /* Smaller font size for readability on mobile */
+    margin: 0; /* Reset margins for paragraph, padding on parent handles spacing */
+    line-height: 1.5; /* Adjust line height for readability */
+    height: auto; /* Ensure paragraph height adjusts to content */
+    text-align: justify; /* Justify text for better appearance */
+  }
+}
+
+/* You might want to add another media query for even smaller devices like very narrow phones */
+@media screen and (max-width: 480px) {
+  .discover-title h2 {
+    font-size: 24px;
+  }
+  .discover-description p {
+    font-size: 15px;
+  }
+}
