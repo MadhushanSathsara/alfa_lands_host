@@ -24,6 +24,7 @@ const posList = ['All', 'Senior', 'Junior'];
 
 // Supabase Storage Bucket details
 // IMPORTANT: Replace 'hddobdmhmzmmdqtmktse' with YOUR actual Supabase Project Reference
+// You should typically use environment variables for this in a real project
 const SUPABASE_PROJECT_REF = 'hddobdmhmzmmdqtmktse'; // <<< VERIFY THIS!
 const SUPABASE_BUCKET_NAME = 'agentimages'; // Your Supabase Storage bucket name for agents
 const supabaseStorageUrl = `https://${SUPABASE_PROJECT_REF}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/`;
@@ -35,8 +36,10 @@ const Agent = () => {
     const [filtered, setFiltered] = useState([]);
     const [team, setTeam] = useState('All');
     const [pos, setPos] = useState('All');
-    const [showModal, setShowModal] = useState(false); // Renamed from 'show' to avoid conflict
-    const [selectedAgent, setSelectedAgent] = useState(null); // Renamed from 'selected' for clarity
+    const [showModal, setShowModal] = useState(false);
+    const [selectedAgent, setSelectedAgent] = useState(null);
+    const [loading, setLoading] = useState(true); // Add loading state
+    const [error, setError] = useState(null); // Add error state
 
     // State for custom alerts/confirms
     const [showAlert, setShowAlert] = useState(false);
@@ -69,13 +72,18 @@ const Agent = () => {
 
 
     const fetchAgents = async () => {
+        setLoading(true); // Start loading
+        setError(null);    // Clear previous errors
         try {
             const { data, error } = await supabase
                 .from('agents')
                 .select('*')
                 .order('agent_id', { ascending: true }); // Ensure consistent ordering
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase fetch error:', error.message);
+                throw error;
+            }
 
             if (Array.isArray(data)) {
                 setAgents(data);
@@ -86,7 +94,10 @@ const Agent = () => {
             }
         } catch (err) {
             console.error('Error fetching agents from Supabase:', err.message);
+            setError('Failed to load agents. Please check your network and RLS policies.');
             showCustomAlert('Failed to load agents. Please check your network and RLS policies.', false);
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
@@ -116,6 +127,7 @@ const Agent = () => {
         if (!selectedAgent) return;
 
         let imageUrlToSave = selectedAgent.agent_image; // Keep existing image by default
+        let oldImageFileName = selectedAgent.agent_image; // To delete old image if new one is uploaded
 
         try {
             // 1. Upload new image if selected
@@ -123,37 +135,53 @@ const Agent = () => {
                 const file = selectedAgent.newImage;
                 const fileExtension = file.name.split('.').pop();
                 const uniqueFileName = `${uuidv4()}.${fileExtension}`; // Generate unique filename
-                const filePath = `${uniqueFileName}`; // Store in the root of agentimages bucket, or a subfolder if preferred (e.g., `agents/${uniqueFileName}`)
+                const filePath = `${uniqueFileName}`; // Store in the root of agentimages bucket
 
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from(SUPABASE_BUCKET_NAME)
                     .upload(filePath, file, {
                         cacheControl: '3600',
-                        upsert: true, // Overwrite if a file with the same name exists (though uuidv4 should prevent this)
+                        upsert: false, // Do not upsert; uuidv4 makes it unique, so no overwrite
                     });
 
                 if (uploadError) throw uploadError;
                 imageUrlToSave = uniqueFileName; // Update the image filename to be stored in the DB
+
+                // 2. Delete old image from Supabase Storage if a new one was uploaded and old one existed
+                if (oldImageFileName && oldImageFileName !== 'default.jpg' && oldImageFileName !== 'no-image.jpg') { // Add checks for default/placeholder images
+                    const { error: removeError } = await supabase.storage
+                        .from(SUPABASE_BUCKET_NAME)
+                        .remove([oldImageFileName]);
+
+                    if (removeError) {
+                        console.warn("Warning: Old image deletion failed:", removeError.message);
+                        // Do not block save, just log the warning
+                    } else {
+                        console.log(`Successfully deleted old image ${oldImageFileName}`);
+                    }
+                }
             }
 
-            // 2. Prepare update data
+            // 3. Prepare update data
             const updateData = {
                 agent_name: selectedAgent.agent_name,
                 agent_email: selectedAgent.agent_email,
                 agent_username: selectedAgent.agent_username,
-                agent_password: selectedAgent.agent_password, // Be cautious with direct password updates (consider hashing)
+                // WARNING: Directly updating password without hashing here is INSECURE.
+                // This is done as per your specific request "dont use hashed".
+                // In a real application, you would handle passwords securely (e.g., via auth.updateUser, or backend hashing).
+                agent_password: selectedAgent.agent_password,
                 agent_position: selectedAgent.agent_position,
                 agent_team: selectedAgent.agent_team,
-                agent_telephone: selectedAgent.agent_telephone, // Assuming this field exists and is updated
+                agent_telephone: selectedAgent.agent_telephone,
                 agent_image: imageUrlToSave, // Save the filename (or null)
             };
 
-            // 3. Update agent record in the database
-            const { data, error } = await supabase
+            // 4. Update agent record in the database
+            const { error } = await supabase
                 .from('agents')
                 .update(updateData)
-                .eq('agent_id', selectedAgent.agent_id)
-                .select(); // Select updated row to refresh local state
+                .eq('agent_id', selectedAgent.agent_id);
 
             if (error) throw error;
 
@@ -169,15 +197,16 @@ const Agent = () => {
     const handleDelete = (agentId, agentImageFileName) => {
         showCustomAlert("Are you sure you want to delete this agent?", true, async () => {
             try {
-                // 1. Delete image from Supabase Storage (if agent_image exists)
-                if (agentImageFileName) {
+                // 1. Delete image from Supabase Storage (if agent_image exists and is not a default/placeholder)
+                if (agentImageFileName && agentImageFileName !== 'default.jpg' && agentImageFileName !== 'no-image.jpg') {
                     const { error: removeError } = await supabase.storage
                         .from(SUPABASE_BUCKET_NAME)
                         .remove([agentImageFileName]); // Pass the filename
 
                     if (removeError) {
                         console.error("Error deleting agent image from storage:", removeError.message);
-                        // Don't throw, try to delete the agent record anyway
+                        // Don't throw, try to delete the agent record anyway, just log the error.
+                        showCustomAlert(`Warning: Image deletion failed: ${removeError.message}. Proceeding to delete agent record.`, false);
                     } else {
                         console.log(`Successfully deleted image ${agentImageFileName}`);
                     }
@@ -201,6 +230,14 @@ const Agent = () => {
             }
         });
     };
+
+    if (loading) {
+        return <div className="ag-wrap"><p>Loading agents...</p></div>;
+    }
+
+    if (error) {
+        return <div className="ag-wrap"><p className="error-message">Error: {error}</p></div>;
+    }
 
     return (
         <div className="ag-wrap">
@@ -231,9 +268,9 @@ const Agent = () => {
 
             <div className="ag-cards">
                 {filtered.length === 0 ? (
-                    <p className="text-center col-span-full">No agents found.</p>
+                    <p className="text-center col-span-full">No agents found matching your criteria.</p>
                 ) : (
-                    filtered.map((agent) => ( // Removed 'i' as key, agent_id is better if unique
+                    filtered.map((agent) => (
                         <div key={agent.agent_id} className="ag-card">
                             <img
                                 // Construct the public URL for the agent's image
@@ -245,7 +282,7 @@ const Agent = () => {
                             <h3>{agent.agent_name}</h3>
                             <p><b>ID:</b> {agent.agent_id}</p>
                             <p><b>Email:</b> {agent.agent_email}</p>
-                            <p><b>Phone:</b> {agent.agent_telephone || 'N/A'}</p> {/* Ensure telephone field exists */}
+                            <p><b>Phone:</b> {agent.agent_telephone || 'N/A'}</p>
                             <p><b>Position:</b> {agent.agent_position}</p>
                             <p><b>Team:</b> {agent.agent_team}</p>
                             <button onClick={() => handleEdit(agent)} className="edit-btn">Edit</button>
@@ -269,8 +306,10 @@ const Agent = () => {
                         <h6>Username</h6>
                         <input type="text" value={selectedAgent.agent_username || ''} onChange={e => setSelectedAgent({ ...selectedAgent, agent_username: e.target.value })} />
                         <h6>Password</h6>
-                        {/* Note: Handling passwords securely requires hashing and proper backend validation.
-                            For simplicity, this directly updates it. In production, provide a separate password change mechanism. */}
+                        {/* WARNING: This directly exposes the password from the input.
+                            For production, implement secure password management (e.g., hashing on backend, separate password change flow).
+                            This is done to meet the explicit request "dont use hashed".
+                        */}
                         <input type="text" value={selectedAgent.agent_password || ''} onChange={e => setSelectedAgent({ ...selectedAgent, agent_password: e.target.value })} />
                         <h6>Position</h6>
                         <select value={selectedAgent.agent_position || ''} onChange={e => setSelectedAgent({ ...selectedAgent, agent_position: e.target.value })}>
@@ -282,7 +321,7 @@ const Agent = () => {
                             {/* slice(1) to exclude 'All' from edit options */}
                             {teamList.slice(1).map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
-                        <h6>Phone Number</h6> {/* Added input for telephone */}
+                        <h6>Phone Number</h6>
                         <input type="text" value={selectedAgent.agent_telephone || ''} onChange={e => setSelectedAgent({ ...selectedAgent, agent_telephone: e.target.value })} />
                         <h6>Picture</h6>
                         <input type="file" accept="image/*" onChange={e => setSelectedAgent({ ...selectedAgent, newImage: e.target.files[0] })} />
