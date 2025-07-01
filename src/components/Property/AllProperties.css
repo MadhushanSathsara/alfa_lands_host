@@ -113,4 +113,148 @@
 
 
   
-  
+  @media (max-width: 1024px) {
+  .all-properties-listing {
+    padding: 1.5rem; /* Reduce overall padding */
+    margin-top: 30px;
+  }
+
+  .all-properties-title {
+    font-size: 2.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .search-section {
+    padding: 0 15px;
+  }
+
+  .search-input {
+    max-width: 500px; /* Slightly reduce max-width */
+    padding: 10px 18px;
+  }
+
+  .search-button {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  .property-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjust min width for cards */
+    gap: 25px;
+    padding: 0 15px;
+    margin-top: 25px;
+  }
+
+  .property-info .property-title {
+    font-size: 1.4rem;
+  }
+
+  .property-info .price {
+    font-size: 1.1rem;
+  }
+}
+
+/* For screens smaller than 768px (e.g., tablets in portrait and larger phones) */
+@media (max-width: 768px) {
+  .all-properties-listing {
+    padding: 1rem; /* Further reduce padding */
+    margin-top: 20px;
+  }
+
+  .all-properties-title {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-section {
+    padding: 0 10px;
+  }
+
+  .search-container {
+    flex-direction: column; /* Stack input and button */
+    align-items: stretch; /* Stretch items to fill width */
+  }
+
+  .search-input {
+    max-width: 100%; /* Take full width */
+    border-radius: 30px; /* Full border-radius when stacked */
+    margin-bottom: 10px; /* Space between input and button */
+    padding: 12px 20px; /* Restore padding */
+  }
+
+  .search-button {
+    width: 100%; /* Take full width */
+    border-radius: 30px; /* Full border-radius when stacked */
+    padding: 12px 20px; /* Restore padding */
+  }
+
+  .property-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Even smaller min width */
+    gap: 20px;
+    padding: 0 10px;
+    margin-top: 20px;
+  }
+
+  .property-card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Slightly less pronounced shadow */
+  }
+
+  .property-info .property-title {
+    font-size: 1.3rem;
+  }
+
+  .property-info .price {
+    font-size: 1rem;
+  }
+
+  .no-results {
+    font-size: 16px;
+  }
+}
+
+/* For screens smaller than 480px (e.g., most mobile phones) */
+@media (max-width: 480px) {
+  .all-properties-listing {
+    padding: 0.8rem;
+    margin-top: 15px;
+  }
+
+  .all-properties-title {
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .search-section {
+    padding: 0 8px;
+  }
+
+  .search-input {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .search-button {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .property-grid {
+    grid-template-columns: 1fr; /* Single column layout for very small screens */
+    gap: 15px;
+    padding: 0 8px;
+    margin-top: 15px;
+  }
+
+  .property-card {
+    /* If you have images in the card, ensure they are responsive too */
+    /* e.g., img { width: 100%; height: auto; object-fit: cover; } */
+  }
+
+  .property-info .property-title {
+    font-size: 1.2rem;
+  }
+
+  .property-info .price {
+    font-size: 0.95rem;
+  }
+}

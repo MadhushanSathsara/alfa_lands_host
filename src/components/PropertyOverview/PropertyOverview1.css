@@ -434,3 +434,262 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 1200px) {
+  .main-content-wrapper {
+    flex-direction: column; /* Stack columns vertically */
+    gap: 20px;
+    padding: 0 15px; /* Add some side padding */
+  }
+
+  .left-column,
+  .right-column {
+    flex: none; /* Reset flex-grow */
+    width: 100%; /* Take full width */
+    gap: 20px; /* Adjust gap */
+  }
+
+  .property-details-section,
+  .agent-contact-card,
+  .property-summary {
+    width: 100%; /* Ensure all sections take full width */
+    max-width: none; /* Remove max-width constraint */
+  }
+
+  .property-header {
+    height: 350px; /* Slightly reduce header height */
+  }
+
+  .property-header .property-title {
+    font-size: 3rem; /* Slightly smaller title */
+  }
+
+  .carousel-item img {
+    height: 450px; /* Adjust carousel height */
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Adjust minmax for features */
+    gap: 15px;
+  }
+}
+
+/* For screens smaller than 992px (e.g., tablets in portrait) */
+@media (max-width: 992px) {
+  .property-header {
+    padding: 60px 0;
+    height: 300px;
+  }
+
+  .property-header .property-title {
+    font-size: 2.5rem;
+  }
+
+  .property-header h4 {
+    font-size: 1.1rem;
+  }
+
+  .property-meta {
+    flex-direction: column; /* Stack meta items (price, location) */
+    gap: 10px;
+    font-size: 1rem;
+  }
+
+  .price {
+    font-size: 1.5rem;
+  }
+
+  .carousel-item img {
+    height: 350px;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Further adjust minmax */
+    gap: 10px;
+  }
+
+  .feature-item {
+    font-size: 1rem; /* Smaller font for features */
+    height: 60px; /* Reduce feature item height */
+  }
+
+  .nav-tabs .nav-link {
+    padding: 10px 15px; /* Reduce tab padding */
+    font-size: 0.95rem;
+  }
+
+  .agent-contact-card h3,
+  .property-summary h3 {
+    font-size: 1.3rem;
+  }
+}
+
+/* For screens smaller than 768px (e.g., larger mobile phones) */
+@media (max-width: 768px) {
+  .property-overview-container {
+    padding: 15px; /* Less overall padding */
+  }
+
+  .property-header {
+    padding: 40px 0;
+    height: 250px; /* Reduce header height more */
+    margin-bottom: 20px;
+  }
+
+  .property-header .property-title {
+    font-size: 2rem;
+  }
+
+  .overview-content .state {
+    width: 90px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .property-title {
+    font-size: 1.8rem; /* Main property title within section */
+  }
+
+  .property-meta {
+    font-size: 0.9rem;
+    gap: 5px; /* Even smaller gap */
+  }
+
+  .price {
+    font-size: 1.3rem;
+  }
+
+  .carousel-item img {
+    height: 280px; /* Further reduce carousel height */
+  }
+
+  .property-details-section,
+  .agent-contact-card,
+  .property-summary {
+    padding: 15px; /* Reduce card padding */
+  }
+
+  .nav-tabs {
+    flex-wrap: wrap; /* Allow tabs to wrap */
+    justify-content: center; /* Center tabs */
+    gap: 5px; /* Add a small gap between wrapped tabs */
+  }
+
+  .nav-tabs .nav-link {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr; /* Stack features in a single column */
+    gap: 10px;
+  }
+
+  .feature-item {
+    font-size: 0.95rem;
+    height: auto; /* Allow height to adjust */
+    padding: 8px;
+  }
+
+  .feature-item svg {
+    font-size: 1.1rem;
+  }
+
+  .payment-plans li {
+    font-size: 0.95rem;
+    padding: 8px 0 8px 20px; /* Adjust padding for bullet */
+  }
+
+  .payment-plans li:before {
+    font-size: 1.3rem;
+    top: 3px;
+  }
+
+  .agent-info {
+    flex-direction: column; /* Stack agent image and details */
+    text-align: center;
+    gap: 10px;
+  }
+
+  .agent-details h4 {
+    font-size: 1.1rem;
+  }
+
+  .position {
+    font-size: 0.85rem;
+  }
+
+  .contact-methods {
+    align-items: center; /* Center contact methods */
+  }
+
+  .contact-link {
+    font-size: 0.9rem;
+  }
+
+  .enquire-btn,
+  .share-btn,
+  .submit-btn {
+    padding: 8px 15px;
+    font-size: 0.95rem;
+  }
+}
+
+/* For screens smaller than 480px (e.g., most mobile phones) */
+@media (max-width: 480px) {
+  .property-overview-container {
+    padding: 10px;
+  }
+
+  .property-header {
+    height: 200px; /* Even smaller header */
+  }
+
+  .property-header .property-title {
+    font-size: 1.6rem;
+  }
+
+  .property-header h4 {
+    font-size: 0.9rem;
+  }
+
+  .property-title {
+    font-size: 1.5rem;
+  }
+
+  .price {
+    font-size: 1.2rem;
+  }
+
+  .carousel-item img {
+    height: 220px;
+  }
+
+  .nav-tabs .nav-link {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .features-grid {
+    gap: 8px;
+  }
+
+  .feature-item {
+    font-size: 0.9rem;
+    padding: 6px;
+  }
+
+  .agent-contact-card h3,
+  .property-summary h3,
+  .overview-content h3,
+  .location-content h3,
+  .payment-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+
+  .summary-list li {
+    font-size: 0.9rem;
+    padding: 8px 0;
+  }
+}
