@@ -107,3 +107,133 @@
   background-color:#c99506;
    color: white;
 }
+
+@media screen and (max-width: 992px) {
+  .header-title {
+    font-size: 1.8rem;
+  }
+
+  .header-description {
+    font-size: 1rem;
+  }
+
+  .featured-deal {
+    flex: 0 0 calc(50% - 10px); /* Slightly adjust flex basis to account for gap */
+    height: 180px; /* Slightly reduce height */
+  }
+
+  .featured-image {
+    height: 180px;
+  }
+
+  .small-deals {
+    flex: 0 0 calc(50% - 10px); /* Adjust flex basis */
+  }
+
+  .small-deal-item {
+    flex: 0 0 calc(50% - 8px); /* Adjust flex basis for gap */
+    height: 180px; /* Slightly reduce height */
+  }
+
+  .small-deal-image {
+    height: 180px;
+  }
+}
+
+/* For screens smaller than 768px (e.g., tablets in portrait and larger phones) */
+@media screen and (max-width: 768px) {
+  .best-deals-carousel {
+    padding: 15px; /* Reduce padding */
+  }
+
+  .header-title {
+    font-size: 1.6rem;
+  }
+
+  .header-description {
+    font-size: 0.9rem;
+  }
+
+  .deal-slide {
+    flex-direction: column; /* Stack all items vertically */
+    gap: 15px; /* Reduce gap */
+  }
+
+  .featured-deal {
+    flex: 0 0 100%; /* Take full width */
+    height: auto; /* Allow height to adjust */
+  }
+
+  .featured-image {
+    height: 220px; /* A bit taller for better display on full width */
+  }
+
+  .small-deals {
+    flex: 0 0 100%; /* Take full width */
+    flex-direction: column; /* Stack small deals vertically as well */
+    gap: 15px; /* Reduce gap */
+  }
+
+  .small-deal-item {
+    flex: 0 0 100%; /* Take full width */
+    height: auto; /* Allow height to adjust */
+  }
+
+  .small-deal-image {
+    height: 180px; /* Adjust height for small deals */
+  }
+
+  .deal-info {
+    padding: 8px; /* Reduce padding */
+  }
+
+  .deal-title {
+    font-size: 1rem;
+  }
+
+  .deal-location {
+    font-size: 0.8rem;
+  }
+
+  .view {
+    width: 180px; /* Make the button slightly smaller */
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+}
+
+/* For screens smaller than 480px (e.g., most mobile phones) */
+@media screen and (max-width: 480px) {
+  .best-deals-carousel {
+    padding: 10px;
+  }
+
+  .header-title {
+    font-size: 1.4rem;
+  }
+
+  .header-description {
+    font-size: 0.8rem;
+  }
+
+  .featured-image {
+    height: 180px; /* Make image a bit smaller on very small screens */
+  }
+
+  .small-deal-image {
+    height: 150px; /* Make small deal images smaller */
+  }
+
+  .deal-title {
+    font-size: 0.95rem;
+  }
+
+  .deal-location {
+    font-size: 0.75rem;
+  }
+
+  .view {
+    width: 150px;
+    font-size: 0.85rem;
+  }
+}

@@ -56,4 +56,31 @@
   margin: 0 auto;
 }
 
-  
+  @media screen and (min-width: 768px) {
+  .review-card {
+    width: calc(50% - 20px); /* Two cards per row with gap consideration */
+    margin-bottom: 0; /* Remove bottom margin when side-by-side */
+  }
+
+  .customer-reviews h2 {
+    font-size: 2.5rem; /* Larger title for bigger screens */
+  }
+}
+
+/* For screens larger than 992px (e.g., desktops) */
+@media screen and (min-width: 992px) {
+  .review-card {
+    width: calc(33.333% - 20px); /* Three cards per row with gap consideration */
+  }
+
+  .customer-reviews h2 {
+    font-size: 3rem; /* Even larger title for large screens */
+  }
+}
+
+/* For screens larger than 1200px (e.g., large desktops) */
+@media screen and (min-width: 1200px) {
+  .review-card {
+    width: calc(25% - 20px); /* Four cards per row with gap consideration */
+  }
+}

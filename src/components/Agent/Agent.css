@@ -144,3 +144,107 @@
     }
   }
   
+  @media (max-width: 1200px) {
+  .agent-card {
+    width: calc(33.333% - 30px); /* Three cards per row, accounting for gap */
+    padding: 1.2rem;
+  }
+}
+
+/* For screens smaller than 992px (e.g., tablets in landscape) */
+@media (max-width: 992px) {
+  .agent-carousel h2 {
+    font-size: 2.2rem;
+  }
+  .agent-card {
+    width: calc(50% - 25px); /* Two cards per row, adjusting gap */
+    padding: 1rem;
+  }
+  .agent-image {
+    width: 90px;
+    height: 90px;
+  }
+  .agent-name {
+    font-size: 1.3rem;
+  }
+  .position {
+    font-size: 0.95rem;
+  }
+  .about {
+    font-size: 0.85rem;
+  }
+  .social-media a {
+    font-size: 1.4rem;
+  }
+}
+
+/* For screens smaller than 768px (e.g., tablets in portrait and larger phones) */
+@media (max-width: 768px) {
+  .agent-carousel {
+    padding: 1.5rem 1rem; /* Reduce overall padding */
+  }
+  .agent-carousel h2 {
+    font-size: 2rem;
+    padding: 15px 0;
+  }
+  .agents-wrapper {
+    gap: 20px; /* Reduce gap between cards */
+  }
+  .agent-card {
+    flex-direction: column; /* Stack vertically for mobile */
+    text-align: center;
+    width: 90%; /* Take more width on smaller screens */
+    max-width: 320px; /* Limit max width for a single card */
+    margin: 0 auto; /* Center individual cards if not enough to fill a row */
+    padding: 1rem;
+  }
+  .agent-image {
+    width: 80px;
+    height: 80px;
+  }
+  .agent-name {
+    font-size: 1.2rem;
+  }
+  .position {
+    font-size: 0.9rem;
+  }
+  .about {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .social-media {
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .social-media a {
+    font-size: 1.2rem;
+  }
+}
+
+/* For screens smaller than 480px (e.g., most mobile phones) */
+@media (max-width: 480px) {
+  .agent-carousel h2 {
+    font-size: 1.8rem;
+  }
+  .agent-card {
+    width: 95%; /* Make cards almost full width */
+    max-width: 280px; /* Even smaller max-width */
+    padding: 0.8rem;
+  }
+  .agent-image {
+    width: 70px;
+    height: 70px;
+  }
+  .agent-name {
+    font-size: 1.1rem;
+  }
+  .position {
+    font-size: 0.85rem;
+  }
+  .about {
+    font-size: 0.75rem;
+  }
+  .social-media a {
+    font-size: 1.1rem;
+  }
+}
